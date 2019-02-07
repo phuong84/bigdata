@@ -38,7 +38,7 @@ class PseudoData:
         ## Type of input data
         self._type = datatype if isinstance(datatype,str) else 'int'
         if isinstance(inputfile,str):
-            self.get_data(inputfile,headerline,datatype)
+            self.get(inputfile,headerline,datatype)
     
     ## @brief The destructor
     def __del__(self):
@@ -49,7 +49,7 @@ class PseudoData:
     # @param inputfile input file of real data
     # @param headerline True if there is header line in the input file, default is False
     # @param datatype type of input data (either 'int' or 'float'), default is 'int'
-    def get_data(self, inputfile='', headerline=False, datatype='int'):
+    def get(self, inputfile='', headerline=False, datatype='int'):
         self._logger.debug('Open file '+ inputfile)
         with open(inputfile) as f:
             reader = csv.reader(f)
@@ -89,6 +89,16 @@ class PseudoData:
         self._logger.debug('Filter ratio is %d'%(len(subdata))+'/%d'%(len(data)))
         return subdata
 
+    ## @brief Method for getting real data
+    # @return real data
+    def get_data(self):
+        return self._data
+
+    ## @brief Method for getting pseudo-data
+    # @return real data
+    def get_pseudodata(self):
+        return self._pseudodata
+
     ## @brief Method for getting header list
     # @return header list
     def get_header(self):
@@ -112,40 +122,53 @@ class PseudoData:
     ## @brief Method for generating pseudo-data
     # @param *opt parameters for pseudo-data generation, these parameters will be passed
     # to other methods (@_bootstrap)
+    # @return pseudo-data
     def generate(self, *opt):
         if self._method == 'bootstrap':
             if len(opt) < 1:
                 self._logger.error('Not enough parameter for '+self._method+' method')
                 return
-            self._bootstrap(opt)
+            self._bootstrap(*opt)
         if not self._pseudodata:
             self._logger.warning('No pseudo-data was generated')
+            return
+        return self._pseudodata
             
     ## @brief Method for writing pseudo-data to file
-    # @param outfile name of output file which the pseudo-data will be written to
+    # @param outfile name of output file which the real/pseudo-data will be written to
     # @param headerline True if the header line will be writen to output file, default is False
-    def save_as(self, outfile='pseudodata.txt', headerline=False):
-        if not self._pseudodata:
-            self._logger.error('No pseudo-data to be written')
+    def save_as(self, data=None, outfile='pseudodata.txt', headerline=False):
+        if isinstance(data,str):
+            outfile = data
+            data = None
+        if not data:
+            self._logger.warning('No input data, going to write pseudo-data ...')
+            data = self._pseudodata
+        if not data:
+            self._logger.warning('No pseudo-data to be written, going to write real data ...')
+            data = self._data
+        if not data:
+            self._logger.error('No real data to be written')
             return
         with open(outfile,'w') as f:
             writer = csv.writer(f)
             if headerline:
                 writer.writerow(self._header)
-            writer.writerows(self._pseudodata)
+            writer.writerows(data)
+        self._logger.info('Data was written to file '+outfile)
 
     ## @brief Method for generating pseudo-data by using bootstrap
     # @param *opt parameters for pseudo-data generation (input data, number of bootstrap samples,
     # bootstrap sample size)
     def _bootstrap(self, *opt):
-        if isinstance(opt[0],(list,tuple)):
-            data = opt[0][0]
-            nsamples = opt[1] if len(opt) > 2 else 1000
-            sample_size = opt[2] if len(opt) > 3 else 2
+        if isinstance(opt,(list,tuple)):
+            data = opt[0]
+            nsamples = opt[1] if len(opt) > 1 else 1000
+            sample_size = opt[2] if len(opt) > 2 else 2
         else:
             data = self._data
-            nsamples = opt[0] if len(opt) > 1 else 1000
-            sample_size = opt[1] if len(opt) > 2 else 2
+            nsamples = opt[0] if len(opt) > 0 else 1000
+            sample_size = opt[1] if len(opt) > 1 else 2
         self._logger.debug('Generate pseudo-data with '+self._method+' method, nsamples = %d'%(nsamples)+', sample size = %d'%(sample_size))
         self._pseudodata = []
         nrows = len(data)
