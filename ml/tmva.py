@@ -15,12 +15,22 @@ from rootutils import *
 from ROOT import *
 
 ##
-# @class MyTMVA
+# @class TMVAEstimator
 # @brief This class
-class MyTMVA:
+class TMVAEstimator:
 
     ## Dictionary for TMVA types
-    _method = {'BayesClassifier': TMVA.Types.kBayesClassifier, 'Boost': TMVA.Types.kBoost, 'BDT': TMVA.Types.kBDT, 'DT': TMVA.Types.kDT, 'FDA': TMVA.Types.kFDA, 'Fisher': TMVA.Types.kFisher, 'LD': TMVA.Types.kLD, 'Likelihood': TMVA.Types.kLikelihood, ' KNN': TMVA.Types.kKNN, 'MLP': TMVA.Types.kMLP, 'SVM': TMVA.Types.kSVM}
+    _method = {'BayesClassifier': TMVA.Types.kBayesClassifier, 
+               'Boost': TMVA.Types.kBoost, 
+               'BDT': TMVA.Types.kBDT, 
+               'DT': TMVA.Types.kDT, 
+               'FDA': TMVA.Types.kFDA, 
+               'Fisher': TMVA.Types.kFisher, 
+               'LD': TMVA.Types.kLD, 
+               'Likelihood': TMVA.Types.kLikelihood, 
+               'KNN': TMVA.Types.kKNN, 
+               'MLP': TMVA.Types.kMLP, 
+               'SVM': TMVA.Types.kSVM}
 
     ## @brief The constructor
     # @param configfile name of configuration file to assign tasks to MyTMVA object
@@ -118,10 +128,13 @@ class MyTMVA:
         # prepare the training/testing
         factory.PrepareTrainingAndTestTree(sig_cut,bkg_cut,task.get('DataPrepOpt',''))
         # book the method and train/test
-        method = factory.BookMethod(self._method[method],method,task.get('MethodOpt',''))
-        factory.TrainAllMethods()
-        factory.TestAllMethods()
-        factory.EvaluateAllMethods()
+        factory.BookMethod(self._method[method],'BDT')
+        #factory.BookMethod(self._method[method],method,task.get('MethodOpt',''))
+        #factory.TrainAllMethods()
+        #factory.TestAllMethods()
+        #factory.EvaluateAllMethods()
+        #factory.DeleteAllMethods()
+        #method = None
         outfile.Close()
 
     ## @brief Method to validate training task
@@ -169,6 +182,7 @@ class MyTMVA:
             plotter.plot_histos()
             self._logger.debug('Save file as '+outpath+'/'+get_filename(filepath)+'_'+matrix+'.'+extension)
             plotter.save_plot(outpath+'/'+get_filename(filepath)+'_'+matrix+'.'+extension)
+        f.Close()
 
     ## @brief Method to make signal/background variable comparison plots
     # @param filepath path of input file
@@ -200,6 +214,7 @@ class MyTMVA:
             plotter.build_legend(0.7,0.72,0.87,0.88)
             self._logger.debug('Save file as '+outpath+'/'+name+'_'+var+'.'+extension)
             plotter.save_plot(outpath+'/'+name+'_'+var+'.'+extension)
+        f.Close()
 
     ## @brief Method to make overtrain check plot
     # @param filepath path of input file
@@ -247,7 +262,7 @@ class MyTMVA:
         #text.DrawLatex(0.15,0.93,result_string)
         self._logger.debug('Save file as '+outpath+'/'+name+'_overtraining.'+extension)
         plotter.save_plot(outpath+'/'+name+'_overtraining.'+extension)
-        
+        f.Close()
 
     ## @brief Method to make ROC plot
     # @param files list of input files
